@@ -1,3 +1,4 @@
+import glob
 import openai
 import os
 import yt_dlp as youtube_dl
@@ -135,9 +136,28 @@ def convert_vtt_to_plaintext(vtt_file, similarity_threshold=90):
     return "\n".join(plaintext_captions)
 
 
+def delete_files(wildcard='*.vtt'):
+    files = glob.glob(wildcard)
+    for file in files:
+        try:
+            os.remove(file)
+            print(f"Deleted {file}")
+        except OSError as e:
+            print(f"Error deleting {file}: {e}")
+
+
+def list_files(wildcard='*.vtt'):
+    files = glob.glob(wildcard)
+    print(f"Files with the '{wildcard}' extension:", files)
+    return files
+
+
 if __name__ == "__main__":
     # Main script
     video_url = "https://www.youtube.com/watch?v=GRP5rsyO9Pw"
+    if len(sys.argv) >= 2:
+        video_url = sys.argv[1]
+        print("Custom URL detected:", video_url)
     audio_output = "audio.mp3"
     chunk_length = 60 * 15  # Split audio into 15min chunks
 
@@ -148,8 +168,9 @@ if __name__ == "__main__":
     subtitles_output = "captions.srt"
 
     title, url = get_video_info(video_url)
+    delete_files()
     if download_subtitles(video_url, subtitles_output):
-        downloaded_subtitles_file = f"{subtitles_output}.en.vtt"  # Use the correct file name
+        downloaded_subtitles_file = list_files()[0]
         captions_content = convert_vtt_to_plaintext(downloaded_subtitles_file)
 
         with open('transcript.txt', "w", encoding="utf-8") as f:
