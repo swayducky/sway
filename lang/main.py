@@ -2,11 +2,6 @@ from dotenv import load_dotenv
 from langchain import OpenAI
 from llama_index import SimpleDirectoryReader, LangchainEmbedding, GPTListIndex, GPTSimpleVectorIndex, PromptHelper
 from llama_index import LLMPredictor, ServiceContext
-import sys
-import os
-
-load_dotenv()
-
 
 def construct_index(directory_path='./data'):
     llm_predictor = LLMPredictor(llm=OpenAI(
@@ -29,5 +24,6 @@ def chat(input_index='index.json'):
 
 
 if __name__ == "__main__":
-    # construct_index()
+    load_dotenv()
+    construct_index()
     chat()
