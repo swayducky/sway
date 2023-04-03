@@ -1,7 +1,6 @@
 from dotenv import load_dotenv
 from langchain import OpenAI
-from llama_index import SimpleDirectoryReader, GPTSimpleVectorIndex
-from llama_index import LLMPredictor, ServiceContext
+from llama_index import SimpleDirectoryReader, GPTSimpleVectorIndex, LLMPredictor, ServiceContext
 
 def construct_index(directory_path='./data'):
     llm_predictor = LLMPredictor(llm=OpenAI(
@@ -14,14 +13,12 @@ def construct_index(directory_path='./data'):
     index.save_to_disk('index.json')
     return index
 
-
 def chat(input_index='index.json'):
     index = GPTSimpleVectorIndex.load_from_disk(input_index)
     while True:
         query = input('HUMAN >>> ')
         response = index.query(query, response_mode="compact")
         print(f"\nAI >>> {response.response}\n\n")
-
 
 if __name__ == "__main__":
     load_dotenv()
