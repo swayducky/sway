@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from langchain import OpenAI
-from llama_index import SimpleDirectoryReader, LangchainEmbedding, GPTListIndex, GPTSimpleVectorIndex, PromptHelper
+from llama_index import SimpleDirectoryReader, GPTSimpleVectorIndex
 from llama_index import LLMPredictor, ServiceContext
 
 def construct_index(directory_path='./data'):
