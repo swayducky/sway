@@ -1,3 +1,4 @@
+import re
 import cv2
 import os
 
@@ -27,6 +28,12 @@ def images_to_video(image_dir, video_name, fps):
 def image_to_video(image_path, video_name, fps, duration):
     # Read the image
     frame = cv2.imread(image_path)
+    
+    # Check if the image was read successfully
+    if frame is None:
+        print(f'Error: Unable to read image from {image_path}')
+        return
+
     height, width, _ = frame.shape
 
     # Calculate the total number of frames based on the desired duration and fps
@@ -50,4 +57,7 @@ IMG_DIR = '_images/'
 # images_to_video(IMG_DIR, '_out/i2v.mp4', 30)
 # images_to_video(IMG_DIR, '_out/i2v.mp4', 30)
 
-image_to_video(os.listdir(IMG_DIR)[0], '_out/i2v.mp4', 30, 1)
+RX = re.compile(r'^.*\.(jpg|png|jpeg)$', re.IGNORECASE)
+image_file = [f for f in os.listdir(IMG_DIR) if RX.match(f)][0]
+image_path = os.path.join(IMG_DIR, image_file)
+image_to_video(image_path, '_out/i2v.mp4', 1, 10)
