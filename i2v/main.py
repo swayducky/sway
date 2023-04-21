@@ -45,8 +45,9 @@ def image_to_video(image_path, video_name, fps, duration):
 
     print(f'Video saved as {video_name}')
 
+IMG_DIR = '_images/'
 
-# images_to_video('images/', 'blah.mp4', 30)
-# images_to_video('images/', 'blah.mp4', 30)
+# images_to_video(IMG_DIR, '_out/i2v.mp4', 30)
+# images_to_video(IMG_DIR, '_out/i2v.mp4', 30)
 
-image_to_video(os.listdir('images')[0], 'out.mp4', 30, 1)
+image_to_video(os.listdir(IMG_DIR)[0], '_out/i2v.mp4', 30, 1)
