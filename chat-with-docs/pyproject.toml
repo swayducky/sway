@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "chat-with-docs"
+version = "0.1.0"
+description = ""
+authors = ["Sway Ducky <swayducky@gmail.com>"]
+readme = "README.md"
+packages = [{include = "chat_with_docs"}]
+
+[tool.poetry.dependencies]
+python = "3.9.15"
+llama-index = "^0.6.6"
+streamlit = "^1.22.0"
+pandasai = "^0.2.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
