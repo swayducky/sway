@@ -13,6 +13,7 @@ imageio = {version = "2.26.1", extras = ["ffmpeg"]}
 torch = "1.13.0"
 transformers = "4.27.2"
 diffusers = {path = "diffusers"}
+python-slugify = "^8.0.1"
 
 
 [build-system]
