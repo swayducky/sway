@@ -8,6 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 opencv-python = "^4.7.0.72"
+python-slugify = "^8.0.1"
 
 
 [build-system]

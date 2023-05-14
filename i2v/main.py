@@ -1,6 +1,7 @@
 import re
 import cv2
 import os
+from slugify import slugify
 
 def images_to_video(image_dir, video_name, fps):
     # Get a list of image files in the directory
@@ -57,7 +58,10 @@ IMG_DIR = '_in_i2v/'
 # images_to_video(IMG_DIR, '_out/i2v.mp4', 30)
 # images_to_video(IMG_DIR, '_out/i2v.mp4', 30)
 
-RX = re.compile(r'^.*\.(jpg|png|jpeg)$', re.IGNORECASE)
-image_file = [f for f in os.listdir(IMG_DIR) if RX.match(f)][0]
-image_path = os.path.join(IMG_DIR, image_file)
-image_to_video(image_path, '_out/i2v.mp4', 1, 10)
+RX = re.compile(r'^(.*)\.(?:jpg|png|jpeg)$', re.IGNORECASE)
+for f in os.listdir(IMG_DIR):
+    m = RX.match(f)
+    if m:
+        print("Processing:", f)
+        image_path = os.path.join(IMG_DIR, f)
+        image_to_video(image_path, f'_out/i) {m.group(1)}.mp4', 1, 10)
