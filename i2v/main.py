@@ -52,7 +52,7 @@ def image_to_video(image_path, video_name, fps, duration):
 
     print(f'Video saved as {video_name}')
 
-IMG_DIR = '_i2v_in/'
+IMG_DIR = '_in_i2v/'
 
 # images_to_video(IMG_DIR, '_out/i2v.mp4', 30)
 # images_to_video(IMG_DIR, '_out/i2v.mp4', 30)
@@ -60,4 +60,4 @@ IMG_DIR = '_i2v_in/'
 RX = re.compile(r'^.*\.(jpg|png|jpeg)$', re.IGNORECASE)
 image_file = [f for f in os.listdir(IMG_DIR) if RX.match(f)][0]
 image_path = os.path.join(IMG_DIR, image_file)
-image_to_video(image_path, '_i2v_out/i2v.mp4', 1, 10)
+image_to_video(image_path, '_out/i2v.mp4', 1, 10)
