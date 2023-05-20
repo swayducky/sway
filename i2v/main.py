@@ -3,7 +3,7 @@ import cv2
 import os
 from slugify import slugify
 
-def images_to_video(image_dir, video_name, fps):
+def images_to_video(image_dir, video_name, fps=25):
     # Get a list of image files in the directory
     image_files = sorted(os.listdir(image_dir))
     
@@ -26,7 +26,7 @@ def images_to_video(image_dir, video_name, fps):
     print(f'Video saved as {video_name}')
 
 
-def image_to_video(image_path, video_name, fps, duration):
+def image_to_video(image_path, video_name, duration, fps=25):
     # Read the image
     frame = cv2.imread(image_path)
     
@@ -64,4 +64,4 @@ for f in os.listdir(IMG_DIR):
     if m:
         print("Processing:", f)
         image_path = os.path.join(IMG_DIR, f)
-        image_to_video(image_path, f'_out/i) {m.group(1)}.mp4', 1, 10)
+        image_to_video(image_path, f'_out/i) {m.group(1)}.mp4', 10)
