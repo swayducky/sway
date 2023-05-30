@@ -3,7 +3,7 @@
 To install a local version of CUDA:
 ```
 ./cuda_install.sh 117
-./cuda_install.sh 102
+./cuda_install.sh 101
 ```
 
 ## Credits
