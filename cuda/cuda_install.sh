@@ -79,7 +79,14 @@ FILE=$(basename $URL)
 if [[ -n "$CUDA_VERSION" ]]; then
   echo $URL
   echo $FILE
-  wget $URL
+  files=( *.run )
+  if [ ! -f "${files[0]}" ]; then
+    # No .run files exist in the directory, so download the file.
+    wget $URL
+  else
+    echo ".run files exist. Skipping wget."
+  fi
+
   sudo bash $FILE --no-drm --no-man-page --override --toolkitpath=$BASE_PATH/$FOLDER/ --toolkit
   echo "If this failed, try adding 'sudo' to the command above in the cuda_install.sh file"
   if [[ "$EXPORT_BASHRC" = "1" ]]; then
@@ -92,9 +99,9 @@ if [[ -n "$CUDA_VERSION" ]]; then
     echo "export PATH=\$PATH:$BASE_PATH/$FOLDER/bin"
     echo "export CUDA_HOME=$BASE_PATH/$FOLDER"
   fi
-  echo "Deleting *.run files (huge files)"
-  rm *.run
-  rm *.run.*
+  # echo "Deleting *.run files (huge files)"
+  # rm *.run
+  # rm *.run.*
 else
   echo "No CUDA_VERSION specified."
 fi
