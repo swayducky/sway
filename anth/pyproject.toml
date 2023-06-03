@@ -8,6 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.8"
 anthropic = "^0.2.9"
+python-dotenv = "^1.0.0"
 
 
 [build-system]
