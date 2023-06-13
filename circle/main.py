@@ -3,7 +3,7 @@ import os
 
 def circle_crop(path):
     image = Image.open(path)
-    image = image.convert("RGBA") # Ensure alpha layer
+    image = image.convert("RGBA")  # Ensure alpha layer
 
     # Crop in the middle, width-wise and height-wise.
     width, height = image.size
@@ -16,12 +16,15 @@ def circle_crop(path):
         image = image.crop((left, top, right, bottom))
 
     # Make the image circular
-    mask = Image.new("L", image.size, 0)
+    mask = Image.new('L', image.size, 0)
     draw = ImageDraw.Draw(mask)
-    draw.ellipse((0, 0, image.size[0], image.size[1]), fill=255)
+    draw.ellipse((0, 0) + image.size, fill=255)
 
-    result = ImageOps.fit(image, mask.size, centering=(0.5, 0.5))
-    result.putalpha(mask)
+    # Create a new image with the same size as mask, but completely transparent
+    result = Image.new('RGBA', image.size, (0, 0, 0, 0))
+
+    # Apply the mask to the image using the composite operation
+    result = Image.alpha_composite(result, Image.composite(image, result, mask))
 
     # Add a border
     border_color = "#0AAD0A"
