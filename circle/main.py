@@ -1,5 +1,7 @@
 from PIL import Image, ImageOps, ImageDraw
 import os
+from pathlib import Path
+
 
 def circle_crop(path):
     image = Image.open(path)
@@ -25,19 +27,25 @@ def circle_crop(path):
 
     # Apply the mask to the image using the composite operation
     result = Image.alpha_composite(result, Image.composite(image, result, mask))
-
-    # Add a border
-    border_color = "#0AAD0A"
-    border = Image.new("RGB", (result.width + 2, result.height + 2), border_color)
-    border.paste(result, (1, 1))
-    return border
+    return result
 
 def process_directory(directory):
-    for filename in os.listdir(directory):
-        print(filename)
-        if filename.endswith(".png") or filename.endswith(".jpg") or filename.endswith(".jpeg"):
-            path = os.path.join(directory, filename)
-            new_image = circle_crop(path)
-            new_image.save(os.path.join("_out", "circle_" + filename)) # Save new images with a prefix
+    for subdir, dirs, files in os.walk(directory):
+        for file in files:
+            if file.endswith(".png") or file.endswith(".jpg") or file.endswith(".jpeg"):
+                print(file)
+                path = os.path.join(subdir, file)
+                new_image = circle_crop(path)
+                
+                # Get the relative path of subdirectory
+                rel_path = os.path.relpath(subdir, directory)
+                
+                # Create corresponding output directory
+                output_directory = os.path.join("_out", rel_path)
+                os.makedirs(output_directory, exist_ok=True)
+                
+                base_filename, _ = os.path.splitext(file)  # Get the filename without extension
+                new_image.save(os.path.join(output_directory, "circle_" + base_filename + ".png"))
+
 
 process_directory("_images")
