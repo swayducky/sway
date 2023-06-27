@@ -7,7 +7,7 @@ if ! command -v ffmpeg &> /dev/null; then
 fi
 
 # Process all MP4 files in the input directory
-for input_file in ./_in_video/*.mp4; do
+for input_file in ./_in/*.mp4; do
     # Get the base name of the file
     base_name=$(basename "$input_file")
 
