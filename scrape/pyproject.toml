@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "scrape"
+version = "0.1.0"
+description = ""
+authors = ["Sway Ducky <swayducky@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+html2text = "^2020.1.16"
+requests = "^2.31.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
