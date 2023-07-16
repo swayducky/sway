@@ -1,1 +1,7 @@
-output.*
+*.json
+*.mp3
+*.wav
+*.srt
+*.tsv
+*.txt
+*.vtt
