@@ -10,6 +10,7 @@ packages = [{include = "dev_agent"}]
 python = "^3.10"
 langchain = "^0.0.242"
 python-dotenv = "^1.0.0"
+openai = "^0.27.8"
 
 
 [build-system]
