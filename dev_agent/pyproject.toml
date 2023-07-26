@@ -8,6 +8,8 @@ packages = [{include = "dev_agent"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
+langchain = "^0.0.242"
+python-dotenv = "^1.0.0"
 
 
 [build-system]
