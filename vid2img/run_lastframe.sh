@@ -12,3 +12,5 @@ $CMD
 
 # Clean up the reversed video
 rm tmp_reversed.mp4
+
+echo "== Done! See: _out/last_frame.png"
