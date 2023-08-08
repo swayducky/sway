@@ -89,20 +89,6 @@ def get_video_info(video_url):
         info = ydl.extract_info(video_url, download=False)
         return info['title'], info['webpage_url']
 
-
-
-    # Function to get video information from a YouTube URL
-def get_video_info(video_url):
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'outtmpl': '%(title)s.%(ext)s',
-        'nocheckcertificate': True,
-    }
-
-    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(video_url, download=False)
-        return info['title'], info['webpage_url']
-
 # Function to download subtitles (CC) from a YouTube video
 def download_subtitles(video_url, output_file):
     ydl_opts = {
@@ -164,10 +150,7 @@ if __name__ == "__main__":
     title, url = get_video_info(video_url)
     print("== Video title:", title)
     print("== URL:", url)
-
     subtitles_output = "captions.srt"
-
-    title, url = get_video_info(video_url)
     delete_files()
     if download_subtitles(video_url, subtitles_output):
         downloaded_subtitles_file = list_files()[0]
