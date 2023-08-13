@@ -1,8 +1,6 @@
 import glob
-import os
 import yt_dlp as youtube_dl
 import webvtt
-# from moviepy.editor import *
 
 
 # Function to get video information from a YouTube URL
@@ -42,7 +40,6 @@ def convert_vtt_to_plaintext(vtt_file):
         for line in caption.text.split('\n'):
             line = line.strip()
             if line and line != prev_text:
-                print(prev_text, "====>", line)
                 plaintext_captions.append(line)
                 prev_text = line
     return "\n".join(plaintext_captions)
