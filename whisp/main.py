@@ -1,5 +1,6 @@
 # Adapted from: https://github.com/Majdoddin/nlp/blob/main/Pyannote_plays_and_Whisper_rhymes_v_2_0.ipynb
 
+import webvtt
 import glob
 import sys
 import json
@@ -21,7 +22,7 @@ os.chdir(cwd)
 PREFIX_MILLIS = 2000
 
 def dl_audio():
-    video_url = "https://www.youtube.com/watch?v=QAAfDQx8DDQ"
+    video_url = "https://www.youtube.com/watch?v=GtaxU6DZvLs"
     if len(sys.argv) > 1:
         video_url = sys.argv[1]
     from yt_dlp import YoutubeDL
@@ -40,7 +41,7 @@ def dl_audio():
         video_title = info_dict.get('title', None)
         print("Title: " + video_title)
 
-# dl_audio()
+dl_audio()
 
 def get_audio_file():
     audio_files = [file for ext in ['mp3', 'wav', 'm4a'] for file in glob.glob(f"*.{ext}")]
@@ -60,23 +61,24 @@ def make_lab():
     PREFIX_SECONDS = PREFIX_MILLIS / 1000
     windows = []
     with open("dz.lab", "w") as f:
-        window = dict(start=PREFIX_SECONDS, end=PREFIX_SECONDS, speaker=None)
-        def write(new_turn=None):
-            w = dict(start=window['start'] - PREFIX_SECONDS,
-                     end=(min(window['end'], new_turn.start) if new_turn else window['end']) - PREFIX_SECONDS,
-                     speaker=window['speaker'])
-            windows.append(w)
-            f.write(f"{w['start']:.3f} {w['end']:.3f} {window['speaker']}\n")
+        # window = dict(start=PREFIX_SECONDS, end=PREFIX_SECONDS, speaker=None)
+        # def write(new_turn=None):
+        #     w = dict(start=window['start'] - PREFIX_SECONDS,
+        #              end=(min(window['end'], new_turn.start) if new_turn else window['end']) - PREFIX_SECONDS,
+        #              speaker=window['speaker'])
+        #     windows.append(w)
+        #     f.write(f"{w['start']:.3f} {w['end']:.3f} {window['speaker']}\n")
         for turn, track, speaker in dz.itertracks(yield_label=True):
-            if speaker != window['speaker']:
-                if window['speaker'] is not None:
-                    write(turn)
-                window['speaker'] = speaker
-                window['start'] = turn.start
-            window['end'] = turn.end
-        write()
+            # if speaker != window['speaker']:
+            #     if window['speaker'] is not None:
+            #         write(turn)
+            #     window['speaker'] = speaker
+            #     window['start'] = turn.start
+            # window['end'] = turn.end
+            f.write(f"{turn.start - PREFIX_SECONDS:.3f} {turn.end - PREFIX_SECONDS:.3f} {speaker}\n")
+        # write()
 
-# make_lab()
+make_lab()
 
 def make_windows():
     windows = []
@@ -91,38 +93,22 @@ def make_windows():
     return windows
 
 windows = make_windows()
+print(windows)
 
 def timestamp_to_seconds(timestamp):
     hours, minutes, seconds = map(float, timestamp.split(':'))
     return hours * 3600 + minutes * 60 + seconds
 
 def parse_vtt():
-    with open(glob.glob("*.vtt")[0], 'r', encoding='utf-8') as file:
-        content = file.read()
-
-    # Split the content by newline characters to iterate through the lines
-    lines = content.strip().split('\n')
-
     chunks = []
-    current_chunk = {}
-    for line in lines:
-        # Skip lines with metadata
-        if line.startswith('WEBVTT') or line.startswith('NOTE'):
-            continue
-        # If it's an empty line, it indicates the end of the current chunk
-        elif line.strip() == '':
-            if current_chunk:
-                chunks.append(current_chunk)
-                current_chunk = {}
-        # Extract timestamps
-        elif re.match(r'\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}', line):
-            start_time, end_time = line.split(' --> ')
-            current_chunk['start'] = timestamp_to_seconds(start_time)
-            current_chunk['end'] = timestamp_to_seconds(end_time)
-        # Anything else is assumed to be part of the text
-        else:
-            current_chunk['text'] = current_chunk.get('text', '') + ' ' + line.strip()
-
+    captions = webvtt.read(glob.glob("*.vtt")[0])
+    prev_text = ""
+    for caption in captions:
+        for line in caption.text.split('\n'):
+            line = line.strip()
+            if line and line != prev_text:
+                prev_text = line
+                chunks.append(dict(text=line, start=caption.start_in_seconds, end=caption.end_in_seconds))
     return chunks
 
 chunks = parse_vtt()
@@ -171,7 +157,7 @@ def make_transcript(windows, chunks):
                 if speaker != last_speaker:
                     f.write(f"\n\n[{speaker}] ")
                     last_speaker = speaker
-                f.write(word)
+                f.write(' ' + word)
 
 
 make_transcript(windows, chunks)

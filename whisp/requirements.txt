@@ -3,3 +3,4 @@ yt-dlp
 pydub
 pyannote-audio
 openai-whisper
+webvtt-py
