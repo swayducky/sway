@@ -1,174 +1,177 @@
 # Adapted from: https://github.com/Majdoddin/nlp/blob/main/Pyannote_plays_and_Whisper_rhymes_v_2_0.ipynb
+
+import glob
+import sys
 import json
 import whisper
 import re
 from pydub import AudioSegment
 import os
 from dotenv import load_dotenv
-from pathlib import Path
-import locale
-import subprocess
 import torch
+from pathlib import Path
+from datetime import timedelta
 
 load_dotenv()
 
-locale.getpreferredencoding = lambda: "UTF-8"
+cwd = '_out/bios'
+Path(cwd).mkdir(parents=True, exist_ok=True)
+os.chdir(cwd)
 
-Source = 'Youtube'
-video_url = "https://www.youtube.com/watch?v=SRgct4c5T5U"
-video_path = "_in/blah.mp3"
-output_path = "_out/"
-output_path = str(Path(output_path))
-audio_title = "Sample Order Taking"
+PREFIX_MILLIS = 2000
 
-from pyannote.audio import Pipeline
-pipeline = Pipeline.from_pretrained('pyannote/speaker-diarization', use_auth_token=True)
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# pipeline.to(device)
+def dl_audio():
+    video_url = "https://www.youtube.com/watch?v=QAAfDQx8DDQ"
+    if len(sys.argv) > 1:
+        video_url = sys.argv[1]
+    from yt_dlp import YoutubeDL
+    options = {
+        'format': 'bestaudio/best',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'wav',
+        }],
+        'outtmpl': "whisp",
+        'writeautomaticsub': True,
+        'subtitlesformat': 'srt',
+    }
+    with YoutubeDL(options) as ydl: 
+        info_dict = ydl.extract_info(video_url, download=True)
+        video_title = info_dict.get('title', None)
+        print("Title: " + video_title)
 
-print("output_path:", output_path)
-os.chdir(output_path)
+# dl_audio()
 
-video_title = ""
-video_id = ""
+def get_audio_file():
+    audio_files = [file for ext in ['mp3', 'wav', 'm4a'] for file in glob.glob(f"*.{ext}")]
+    print("== audio files found:", audio_files, "=>", audio_files[0])
+    return audio_files[0]
 
-spacermilli = 2000
 
-def prep():
-    if Source == "Youtube":
-        from yt_dlp import YoutubeDL
-        options = {
-            'format': 'bestaudio/best',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'wav',
-            }],
-            'outtmpl': f"whisp/input",
-        }
-        with YoutubeDL(options) as ydl: 
-            print("Title: " + video_title) # <= Here, you got the video title
-            info_dict = ydl.extract_info(video_url, download=True)
-            video_title = info_dict.get('title', None)
-            video_id = info_dict.get('id', None)
-            print("Title: " + video_title)
+def make_lab():
     # pyannote.audio seems to miss the first 0.5 seconds of the audio, and, therefore, we prepend 2000ms
-    audio = AudioSegment.silent(duration=spacermilli).append(AudioSegment.from_wav("whisp/input.wav"), crossfade=0)
-    audio.export('input_prep.wav', format='wav')
+    audio = AudioSegment.silent(duration=PREFIX_MILLIS).append(AudioSegment.from_file(get_audio_file()), crossfade=0)
+    audio.export('whisp_tmp.wav', format='wav')
+    from pyannote.audio import Pipeline
+    pipeline = Pipeline.from_pretrained('pyannote/speaker-diarization', use_auth_token=True)
+    dz = pipeline('whisp_tmp.wav')
+    # delete tmp file
+    os.remove('whisp_tmp.wav')
+    PREFIX_SECONDS = PREFIX_MILLIS / 1000
+    windows = []
+    with open("dz.lab", "w") as f:
+        window = dict(start=PREFIX_SECONDS, end=PREFIX_SECONDS, speaker=None)
+        def write(new_turn=None):
+            w = dict(start=window['start'] - PREFIX_SECONDS,
+                     end=(min(window['end'], new_turn.start) if new_turn else window['end']) - PREFIX_SECONDS,
+                     speaker=window['speaker'])
+            windows.append(w)
+            f.write(f"{w['start']:.3f} {w['end']:.3f} {window['speaker']}\n")
+        for turn, track, speaker in dz.itertracks(yield_label=True):
+            if speaker != window['speaker']:
+                if window['speaker'] is not None:
+                    write(turn)
+                window['speaker'] = speaker
+                window['start'] = turn.start
+            window['end'] = turn.end
+        write()
 
-# prep()
+# make_lab()
 
-dz = pipeline('input_prep.wav')  
-with open("diarization.txt", "w") as text_file:
-    text_file.write(str(dz))
+def make_windows():
+    windows = []
+    with open("dz.lab") as f:
+        for line in f:
+            start, end, speaker = line.strip().split()
+            windows.append({
+                'start': float(start),
+                'end': float(end),
+                'speaker': speaker
+            })
+    return windows
+
+windows = make_windows()
+
+def timestamp_to_seconds(timestamp):
+    hours, minutes, seconds = map(float, timestamp.split(':'))
+    return hours * 3600 + minutes * 60 + seconds
+
+def parse_vtt():
+    with open(glob.glob("*.vtt")[0], 'r', encoding='utf-8') as file:
+        content = file.read()
+
+    # Split the content by newline characters to iterate through the lines
+    lines = content.strip().split('\n')
+
+    chunks = []
+    current_chunk = {}
+    for line in lines:
+        # Skip lines with metadata
+        if line.startswith('WEBVTT') or line.startswith('NOTE'):
+            continue
+        # If it's an empty line, it indicates the end of the current chunk
+        elif line.strip() == '':
+            if current_chunk:
+                chunks.append(current_chunk)
+                current_chunk = {}
+        # Extract timestamps
+        elif re.match(r'\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}', line):
+            start_time, end_time = line.split(' --> ')
+            current_chunk['start'] = timestamp_to_seconds(start_time)
+            current_chunk['end'] = timestamp_to_seconds(end_time)
+        # Anything else is assumed to be part of the text
+        else:
+            current_chunk['text'] = current_chunk.get('text', '') + ' ' + line.strip()
+
+    return chunks
+
+chunks = parse_vtt()
+
+def make_transcript_whisper(windows):
+    model = whisper.load_model("base") # Change this to your desired model
+    print("Whisper model loaded.")
+    result = model.transcribe(audio=get_audio_file(), word_timestamps=True)
+    with open('whisp.json', 'w') as jsonFile:
+        json.dump(result, jsonFile, indent=2)
+    segments = result['segments']
+    print("Transcription complete. Now writing to file.")
+    index = 0
+    last_speaker = None
+    with open('whisp.txt', 'w') as f:
+        for segment in segments:
+            for word in segment['words']:
+                while word['start'] >= windows[index]['end']:
+                    if index < len(windows) - 1:
+                        index += 1
+                    else:
+                        break
+                speaker = windows[index]['speaker']
+                if speaker != last_speaker:
+                    f.write(f"\n\n[{speaker}] ")
+                    last_speaker = speaker
+                f.write(word['word'])
+
+# make_transcript_whisper(windows)
 
 
-def millisec(timeStr):
-  spl = timeStr.split(":")
-  s = (int)((int(spl[0]) * 60 * 60 + int(spl[1]) * 60 + float(spl[2]) )* 1000)
-  return s
+def make_transcript(windows, chunks):
+    index = 0
+    last_speaker = None
+    with open('whisp.txt', 'w') as f:
+        for chunk in chunks:
+            words = chunk['text'].split()
+            for i, word in enumerate(words):
+                word_start = (chunk['end'] - chunk['start']) * (i / len(words)) + chunk['start']
+                while word_start >= windows[index]['end']:
+                    if index < len(windows) - 1:
+                        index += 1
+                    else:
+                        break
+                speaker = windows[index]['speaker']
+                if speaker != last_speaker:
+                    f.write(f"\n\n[{speaker}] ")
+                    last_speaker = speaker
+                f.write(word)
 
 
-dzs = open('diarization.txt').read().splitlines()
-
-groups = []
-g = []
-lastend = 0
-
-for d in dzs:   
-  if g and (g[0].split()[-1] != d.split()[-1]):      #same speaker
-    groups.append(g)
-    g = []
-  
-  g.append(d)
-  
-  end = re.findall('[0-9]+:[0-9]+:[0-9]+\.[0-9]+', string=d)[1]
-  end = millisec(end)
-  if (lastend > end):       #segment engulfed by a previous segment
-    groups.append(g)
-    g = [] 
-  else:
-    lastend = end
-if g:
-  groups.append(g)
-print(*groups, sep='\n')
-
-
-audio = AudioSegment.from_wav("input_prep.wav")
-gidx = -1
-for g in groups:
-  start = re.findall('[0-9]+:[0-9]+:[0-9]+\.[0-9]+', string=g[0])[0]
-  end = re.findall('[0-9]+:[0-9]+:[0-9]+\.[0-9]+', string=g[-1])[1]
-  start = millisec(start) #- spacermilli
-  end = millisec(end)  #- spacermilli
-  gidx += 1
-  audio[start:end].export(str(gidx) + '.wav', format='wav')
-  print(f"group {gidx}: {start}--{end}")
-
-
-
-def timeStr(t):
-  return '{0:02d}:{1:02d}:{2:06.2f}'.format(round(t // 3600), 
-                                                round(t % 3600 // 60), 
-                                                    t % 60)
-
-def whisp():
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = whisper.load_model('large', device = device)
-    for i in range(len(groups)):
-        audiof = str(i) + '.wav'
-        result = model.transcribe(audio=audiof, language='en', word_timestamps=True)
-        with open(str(i)+'.json', "w") as outfile:
-            json.dump(result, outfile, indent=4)  
-
-    speakers = {'SPEAKER_00':('Customer', '#e1ffc7', 'darkgreen'), 'SPEAKER_01':('Call Center', 'white', 'darkorange') }
-    def_boxclr = 'white'
-    def_spkrclr = 'orange'
-    html = list("")
-    txt = list("")
-    gidx = -1
-    for g in groups:  
-        shift = re.findall('[0-9]+:[0-9]+:[0-9]+\.[0-9]+', string=g[0])[0]
-        shift = millisec(shift) - spacermilli #the start time in the original video
-        shift=max(shift, 0)
-        
-        gidx += 1
-        
-        captions = json.load(open(str(gidx) + '.json'))['segments']
-
-    if captions:
-        speaker = g[0].split()[-1]
-        boxclr = def_boxclr
-        spkrclr = def_spkrclr
-        if speaker in speakers:
-            speaker, boxclr, spkrclr = speakers[speaker] 
-        
-        html.append(f'\n');
-        html.append('\n')
-        html.append(f'{speaker}\n\t\t\t\t')
-        
-        for c in captions:
-            start = shift + c['start'] * 1000.0 
-            start = start / 1000.0   #time resolution ot youtube is Second.            
-            end = (shift + c['end'] * 1000.0) / 1000.0      
-            txt.append(f'[{timeStr(start)} --> {timeStr(end)}] [{speaker}] {c["text"]}\n')
-            for i, w in enumerate(c['words']):
-                if w == "":
-                    continue
-                start = (shift + w['start']*1000.0) / 1000.0        
-                html.append(f'{w["word"]}')
-        html.append('\n')
-        html.append(f'\n')
-
-    with open(f"capspeaker.txt", "w", encoding='utf-8') as file:
-        s = "".join(txt)
-        file.write(s)
-        print('captions saved to capspeaker.txt:')
-        print(s+'\n')
-
-    with open(f"capspeaker.html", "w", encoding='utf-8') as file:    #TODO: proper html embed tag when video/audio from file
-        s = "".join(html)
-        file.write(s)
-        print('captions saved to capspeaker.html:')
-        print(s+'\n')
-
-whisp()
+make_transcript(windows, chunks)

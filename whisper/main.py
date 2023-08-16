@@ -8,7 +8,7 @@ def transcribe_audio(path):
     transcribe = model.transcribe(audio=path)
     segments = transcribe['segments']
     print("Transcription complete. Now writing to file.")
-    with open('out.srt') as srtFile:
+    with open('out.srt', 'w') as srtFile:
         for segment in segments:
             startTime = str(0)+str(timedelta(seconds=int(segment['start'])))+',000'
             endTime = str(0)+str(timedelta(seconds=int(segment['end'])))+',000'
