@@ -30,7 +30,7 @@ function App() {
     };
 
     return (
-        <div className="App" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh'}}>
+        <div className="App" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#FBF0E3' }}>
             {dirs.length > 0 && (
                 <div style={{textAlign: 'center'}}>
                     <h2>{dirs[currentDirIndex]}</h2>
