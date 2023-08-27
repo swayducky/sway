@@ -22,7 +22,7 @@ os.chdir(cwd)
 PREFIX_MILLIS = 2000
 
 def dl_audio():
-    video_url = "https://www.youtube.com/watch?v=GtaxU6DZvLs"
+    video_url = "https://www.youtube.com/watch?v=QAAfDQx8DDQ"
     if len(sys.argv) > 1:
         video_url = sys.argv[1]
     from yt_dlp import YoutubeDL
