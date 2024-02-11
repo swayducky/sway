@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "$#" -ne 1 ]; then
-    echo "Usage: ./convert_to_mp4.sh <input_video>"
+    echo "Usage: <input_video>"
     exit 1
 fi
 
