@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.animation as animation
 
+# Switch to dark mode
+plt.style.use('dark_background')
+
 # Define the grid size (52 weeks, 75 years)
 rows, cols = 52, 75
 
@@ -28,8 +31,8 @@ ax.axis('off')
 color_map = np.full((rows, cols), 'gray', dtype=object)
 
 # Update function for animation
-frames = rows * cols
-updates_per_frame = 10  # Number of logical updates per rendered frame
+frames = 24 * 12  # 24 fps * 12 seconds
+updates_per_frame = (rows * cols) // frames
 
 def update_rendered_frame(rendered_frame):
     for _ in range(updates_per_frame):
@@ -57,10 +60,10 @@ def update_logic(frame):
     scat.set_color(colors_flat)
 
 # Create the animation
-ani = animation.FuncAnimation(fig, update_rendered_frame, frames=frames // updates_per_frame, interval=1000 / 30, blit=True)
+ani = animation.FuncAnimation(fig, update_rendered_frame, frames=frames, interval=1000 / 24, blit=True)
 
 # Save the animation in 1080p
-ani.save('./grid_of_dots_animation_1080p.mp4', writer='ffmpeg', dpi=80, fps=30, savefig_kwargs={'facecolor':'white'})
+ani.save('./grid_of_dots_animation_1080p.mp4', writer='ffmpeg', dpi=80, fps=24, savefig_kwargs={'facecolor':'black'})
 
 # Display the animation
 # plt.show()
