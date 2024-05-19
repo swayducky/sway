@@ -34,12 +34,13 @@ updates_per_frame = 10  # Number of logical updates per rendered frame
 def update_rendered_frame(rendered_frame):
     for _ in range(updates_per_frame):
         update_logic(rendered_frame * updates_per_frame + _)
-    # Years is approximately what column we're on, out of 75. We want to show 1 decimal point though.
-    years = round((rendered_frame * updates_per_frame) / cols, 1)
-    label = 'Years: {}'.format(years)
+    # Calculate the years completed
+    total_frames = rendered_frame * updates_per_frame
+    years = round(total_frames / (rows * cols) * 75, 1)
+    label = 'Years of life: {:.1f}'.format(years)
     print(label)
     count_text.set_text(label)
-    # if first frame, save a screenshot as png
+    # Save the first frame as a screenshot
     if rendered_frame == 0:
         plt.savefig('grid_of_dots.png')
     return scat, count_text
@@ -63,4 +64,3 @@ ani.save('./grid_of_dots_animation_1080p.mp4', writer='ffmpeg', dpi=80, fps=30, 
 
 # Display the animation
 # plt.show()
-
