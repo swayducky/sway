@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "render-art"
+version = "0.1.0"
+description = ""
+authors = ["Sway Ducky <swayducky@gmail.com>"]
+readme = "README.md"
+packages = [{include = "render_art"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+matplotlib = "^3.9.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
